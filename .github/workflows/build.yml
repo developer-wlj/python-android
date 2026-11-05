@@ -80,7 +80,10 @@ jobs:
           name: target-${{ matrix.abi }}
           path: native/target
       - name: Build and verify wheels
-        run: python native/build.py --abi ${{ matrix.abi }} --chaquopy .chaquopy --target native/target/target-*.zip
+        run: |
+          target=$(find native/target -name "target-*-${{ matrix.abi }}.zip" -print -quit)
+          test -n "$target"
+          python native/build.py --abi ${{ matrix.abi }} --chaquopy .chaquopy --target "$target"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: wheels-${{ matrix.abi }}
