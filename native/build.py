@@ -2,6 +2,7 @@ import argparse
 import hashlib
 import json
 import platform
+import re
 import shutil
 import subprocess
 import tarfile
@@ -37,6 +38,19 @@ def extract_source(archive, destination):
             if not (destination / member.name).resolve().is_relative_to(destination.resolve()) or member.issym() or member.islnk():
                 raise ValueError(f"Invalid source path: {member.name}")
         source.extractall(destination)
+
+
+def install_target(target, chaquopy, abi):
+    match = re.fullmatch(r"target-(3\.10\.\d+-\d+)-([a-z0-9_-]+)\.zip", target.name)
+    if not match or match[2].replace("_", "-") != abi:
+        raise ValueError(f"Unexpected target package for {abi}: {target.name}")
+    with ZipFile(target) as archive:
+        if f"jniLibs/{abi}/libpython3.10.so" not in archive.namelist():
+            raise ValueError(f"Target package has no {abi} Python library: {target.name}")
+    directory = chaquopy / "maven/com/chaquo/python/target" / match[1]
+    directory.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(target, directory / target.name)
+    return {"file": target.name, "sha256": hashlib.sha256(target.read_bytes()).hexdigest()}
 
 
 def prepare_numpy_recipe(package, source, work, chaquopy):
@@ -142,6 +156,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--abi", required=True, choices=["arm64-v8a", "armeabi-v7a"])
     parser.add_argument("--chaquopy", required=True, type=Path)
+    parser.add_argument("--target", required=True, type=Path, help="API 23 target ZIP produced by runtime-build.py")
     args = parser.parse_args()
     if platform.system() != "Linux" or platform.machine() != "x86_64":
         raise ValueError("Chaquopy build-wheel requires Linux x86_64")
@@ -157,9 +172,7 @@ def main():
     pypi = chaquopy / "server/pypi"
     work = pypi / "build-tv"
     abi = lock["abis"][args.abi]
-    target_name = f"target-{lock['target']}-{args.abi}.zip"
-    target = chaquopy / "maven/com/chaquo/python/target" / lock["target"] / target_name
-    download(f"https://chaquo.com/maven-central/com/chaquo/python/target/{lock['target']}/{target_name}", target, abi["targetSha256"])
+    target = install_target(args.target.resolve(), chaquopy, args.abi)
     download_host_wheels(abi, pypi)
     output = DIRECTORY / "build/output"
     output.mkdir(parents=True, exist_ok=True)
@@ -179,7 +192,7 @@ def main():
         result = verify_wheel(wheels[0], args.abi)
         shutil.copyfile(wheels[0], output / wheels[0].name)
         results.append(result)
-    report = {"abi": args.abi, "inputs": lock, "rust": rust, "wheels": results}
+    report = {"abi": args.abi, "inputs": lock, "rust": rust, "target": target, "wheels": results}
     (output / f"provenance-{args.abi}.json").write_text(json.dumps(report, indent=2) + "\n")
 
 

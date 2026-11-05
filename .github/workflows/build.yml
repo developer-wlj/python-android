@@ -48,6 +48,7 @@ jobs:
           path: native/build/pywasm-${{ matrix.python }}.json
           if-no-files-found: error
   wheels:
+    needs: runtime
     runs-on: ubuntu-22.04
     timeout-minutes: 45
     strategy:
@@ -74,8 +75,12 @@ jobs:
           python -m pip install -r .chaquopy/server/pypi/requirements.txt
           rustup toolchain install 1.85.0 --profile minimal
           rustup default 1.85.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: target-${{ matrix.abi }}
+          path: native/target
       - name: Build and verify wheels
-        run: python native/build.py --abi ${{ matrix.abi }} --chaquopy .chaquopy
+        run: python native/build.py --abi ${{ matrix.abi }} --chaquopy .chaquopy --target native/target/target-*.zip
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: wheels-${{ matrix.abi }}
@@ -113,6 +118,11 @@ jobs:
         with:
           name: runtime-${{ matrix.abi }}
           path: native/build/runtime-output/*
+          if-no-files-found: error
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: target-${{ matrix.abi }}
+          path: native/build/runtime/maven/*/target-*.zip
           if-no-files-found: error
   release:
     needs: [pywasm, wheels, runtime]

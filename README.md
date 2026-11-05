@@ -8,6 +8,8 @@ Source revisions and hashes are pinned in `native/sources.json` and `native/runt
 
 Push a `v*` tag to build both ABIs and publish a GitHub Release. Manual workflow runs produce Actions artifacts only.
 
+The wheels job links against the API 23 target ZIP produced by the runtime job, so third-party wheels are checked against the same CPython that ships.
+
 Each release contains 12 wheels, 2 native ZIPs and 2 provenance manifests. Binary artifacts stay outside Git.
 
 ## TV integration
