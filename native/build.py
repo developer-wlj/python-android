@@ -172,8 +172,8 @@ def main():
             recipe = prepare_gfortran_recipe(packages[name], abi, work, pypi)
         else:
             recipe = prepare_recipe(name, packages[name], work, chaquopy)
-        run("python", str(pypi / "build-wheel.py"), "--python", "3.10", "--api-level", "24", "--abi", args.abi, str(recipe), cwd=pypi)
-        wheels = list((pypi / "dist" / name).glob(f"*android_24_{args.abi.replace('-', '_')}.whl"))
+        run("python", str(pypi / "build-wheel.py"), "--python", "3.10", "--api-level", "23", "--abi", args.abi, str(recipe), cwd=pypi)
+        wheels = list((pypi / "dist" / name).glob(f"*android_23_{args.abi.replace('-', '_')}.whl"))
         if len(wheels) != 1:
             raise ValueError(f"Expected one {name} wheel, found {len(wheels)}")
         result = verify_wheel(wheels[0], args.abi)

@@ -60,7 +60,7 @@ def compile_bridge(sdk, prefix, work, abi):
     ndk = android / "ndk" / json.loads((DIRECTORY / "runtime-sources.json").read_text())["ndk"]
     run(str(cmake), "-S", str(runtime), "-B", str(native), "-GNinja", "-DCMAKE_BUILD_TYPE=Release",
         f"-DCMAKE_TOOLCHAIN_FILE={ndk}/build/cmake/android.toolchain.cmake", f"-DANDROID_ABI={abi}",
-        "-DANDROID_PLATFORM=android-24", "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON",
+        "-DANDROID_PLATFORM=android-23", "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON",
         "-DCMAKE_SHARED_LINKER_FLAGS=-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384",
         f"-DCHAQUOPY_SRC_DIR={generated}", "-DCHAQUOPY_PYTHON_VERSION=3.10", "-DCHAQUOPY_PY_SUFFIX=.so",
         f"-DCHAQUOPY_INCLUDE_PYTHON={prefix}/include", f"-DCHAQUOPY_LIB_DIRS={prefix}/lib")
@@ -99,7 +99,7 @@ def main():
     verify_checkout(deps, lock["sourceDeps"])
     configure_linker(sdk / "target/android-env.sh", lock["ndk"])
     configure_linker(deps / "android-env.sh", lock["ndk"])
-    os.environ["ANDROID_API_LEVEL"] = "24"
+    os.environ["ANDROID_API_LEVEL"] = "23"
     work = DIRECTORY / "build/runtime"
     cache = work / "source-deps"
     host = "aarch64-linux-android" if args.abi == "arm64-v8a" else "arm-linux-androideabi"

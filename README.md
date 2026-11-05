@@ -1,6 +1,6 @@
 # Python Android
 
-Pinned Android native builds for CPython 3.10, Chaquopy 17.1.0 and third-party wheels. Supports API 24, arm64-v8a and armeabi-v7a.
+Pinned Android native builds for CPython 3.10, Chaquopy 17.1.0 and third-party wheels. Supports API 23, arm64-v8a and armeabi-v7a.
 
 ## Build and release
 
