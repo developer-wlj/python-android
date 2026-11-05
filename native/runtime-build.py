@@ -37,15 +37,14 @@ def disable_newer_apis(script):
     blocked = "".join(f"\tac_cv_func_{name}=no  # Bionic: API 24\n"
                       for name in ["if_nameindex", "lockf", "preadv", "pwritev"])
     content = content.replace(anchor, anchor + blocked)
-    anchor = '    configure_args+=" --enable-ipv6"\n'
-    if content.count(anchor) != 1:
-        raise ValueError("Unexpected CPython configure arguments")
-    largefile = '    configure_args+=" --disable-largefile"  # Bionic LFS64 symbols need API 24\n'
-    content = content.replace(anchor, anchor + largefile)
     anchor = "./configure $configure_args\n"
     if content.count(anchor) != 1:
         raise ValueError("Unexpected CPython configure invocation")
-    content = content.replace(anchor, anchor + "    sed -i '/^#define HAVE_PRLIMIT 1$/d' pyconfig.h  # Bionic: API 24\n")
+    # CPython hardcodes use_lfs=yes, and on 32-bit Bionic that renames fseeko, lockf and friends
+    # onto LFS64 symbols which only exist from API 24. Turning it off keeps off_t at the 32-bit
+    # size the linker can actually satisfy, so do it before configure measures off_t.
+    largefile = "if [ \"$HOST\" = \"arm-linux-androideabi\" ]; then sed -i 's/^use_lfs=yes$/use_lfs=no/' configure; fi\n"
+    content = content.replace(anchor, largefile + anchor + "    sed -i '/^#define HAVE_PRLIMIT 1$/d' pyconfig.h  # Bionic: API 24\n")
     script.write_text(content)
 
 
