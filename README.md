@@ -1,6 +1,6 @@
 # Python Android
 
-Pinned Android native builds for CPython 3.10, Chaquopy 17.1.0 and third-party wheels. Supports API 23, arm64-v8a and armeabi-v7a.
+Pinned Android native builds for CPython 3.10, Chaquopy 17.2.0 and third-party wheels. Supports API 23, arm64-v8a and armeabi-v7a.
 
 ## Build and release
 
@@ -9,6 +9,8 @@ Source revisions and hashes are pinned in `native/sources.json` and `native/runt
 Push a `v*` tag to build both ABIs and publish a GitHub Release. Manual workflow runs produce Actions artifacts only.
 
 The wheels job links against the API 23 target ZIP produced by the runtime job, so third-party wheels are checked against the same CPython that ships.
+
+Bionic only exposes `if_nameindex`, `lockf`, `preadv`, `pwritev` and `prlimit` from API 24, so CPython is configured without them and `os.if_nameindex`, `os.lockf`, `os.preadv`, `os.pwritev` and `resource.prlimit` are absent. `native/verify.py` rejects any shipped library that still references a symbol newer than API 23.
 
 Each release contains 12 wheels, 2 native ZIPs and 2 provenance manifests. Binary artifacts stay outside Git.
 

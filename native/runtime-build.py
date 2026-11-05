@@ -29,6 +29,21 @@ def configure_linker(path, ndk):
     path.write_text(updated)
 
 
+def disable_newer_apis(script):
+    content = script.read_text()
+    anchor = "ac_cv_file__dev_ptc=no\n"
+    if content.count(anchor) != 1:
+        raise ValueError("Unexpected CPython configuration cache")
+    blocked = "".join(f"\tac_cv_func_{name}=no  # Bionic: API 24\n"
+                      for name in ["if_nameindex", "lockf", "preadv", "pwritev"])
+    content = content.replace(anchor, anchor + blocked)
+    anchor = "./configure $configure_args\n"
+    if content.count(anchor) != 1:
+        raise ValueError("Unexpected CPython configure invocation")
+    content = content.replace(anchor, anchor + "    sed -i '/^#define HAVE_PRLIMIT 1$/d' pyconfig.h  # Bionic: API 24\n")
+    script.write_text(content)
+
+
 def build_dependencies(deps, lock, host, cache):
     for name, source in lock["sources"].items():
         if name == "python":
@@ -111,6 +126,7 @@ def main():
     if original.count(before) != 1:
         raise ValueError("Unexpected CPython dependency source configuration")
     script.write_text(original.replace(before, 'url_prefix="${TV_PYTHON_SOURCE_DEPS:?}"'))
+    disable_newer_apis(script)
     python = lock["sources"]["python"]
     download(python["url"], sdk / "target/python/build" / python["version"] / python["file"], python["sha256"])
     prefix = sdk / "target/prefix" / args.abi
