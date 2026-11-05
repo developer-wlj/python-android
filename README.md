@@ -12,6 +12,8 @@ The wheels job links against the API 23 target ZIP produced by the runtime job, 
 
 Bionic only exposes `if_nameindex`, `lockf`, `preadv`, `pwritev` and `prlimit` from API 24, so CPython is configured without them and `os.if_nameindex`, `os.lockf`, `os.preadv`, `os.pwritev` and `resource.prlimit` are absent. `native/verify.py` rejects any shipped library that still references a symbol newer than API 23.
 
+On armeabi-v7a CPython is also configured with `--disable-largefile`, because `_FILE_OFFSET_BITS=64` renames `fseeko` and friends onto the LFS64 symbols, which are API 24 additions too. 32-bit file offsets there therefore stop at 2 GB; arm64-v8a always uses 64-bit `off_t` and is unaffected.
+
 Each release contains 12 wheels, 2 native ZIPs and 2 provenance manifests. Binary artifacts stay outside Git.
 
 ## TV integration

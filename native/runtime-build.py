@@ -37,6 +37,11 @@ def disable_newer_apis(script):
     blocked = "".join(f"\tac_cv_func_{name}=no  # Bionic: API 24\n"
                       for name in ["if_nameindex", "lockf", "preadv", "pwritev"])
     content = content.replace(anchor, anchor + blocked)
+    anchor = '    configure_args+=" --enable-ipv6"\n'
+    if content.count(anchor) != 1:
+        raise ValueError("Unexpected CPython configure arguments")
+    largefile = '    configure_args+=" --disable-largefile"  # Bionic LFS64 symbols need API 24\n'
+    content = content.replace(anchor, anchor + largefile)
     anchor = "./configure $configure_args\n"
     if content.count(anchor) != 1:
         raise ValueError("Unexpected CPython configure invocation")
